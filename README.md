@@ -169,9 +169,9 @@ http://127.0.0.1:8000
 
 ---
 
-## 👩‍💻 Author
+## 👩‍💻 Developed By
 
 **Shreejaa SM**
-AI/ML Developer | Building impactful, ethical AI systems
+
 
 ---
