@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediGuard AI — Heart Risk</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    :root{--primary:#008080;--secondary:#0A2540;--bg:#F5FAFF;--accent:#00C2CB;--card-bg:#fff;--text:#0A2540;--text-muted:#4a6b8a;--border:rgba(10,37,64,.15);}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+    .header{background:linear-gradient(135deg,var(--secondary),#0d3560);padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--accent);box-shadow:0 4px 12px rgba(10,37,64,.15);}
+    .header h1{font-size:1.8rem;color:#fff;font-weight:800;letter-spacing:.5px;}
+    .header p{font-size:0.8rem;color:rgba(255,255,255,.85);margin-top:2px;}
+    .badge-custom{background:var(--primary);color:white;padding:6px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;}
+    .mit-badge{font-size:0.72rem;color:rgba(255,255,255,.8);margin-top:4px;text-align:right;}
+
+    .container{max-width:1200px;}
+
+    .theme-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:1.5rem;box-shadow:0 2px 12px rgba(10,37,64,.06);}
+    .theme-card h2{font-size:1.1rem;color:var(--primary);margin-bottom:14px;font-weight:700;}
+
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .form-group{display:flex;flex-direction:column;gap:4px;}
+    .form-control,.form-select{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);}
+    .form-control:focus,.form-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,194,203,.2);}
+    .form-group label{font-size:0.8rem;color:var(--secondary);font-weight:600;}
+    .form-group input,.form-group select{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.88rem;outline:none;transition:border .2s;}
+    .form-group input:focus,.form-group select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,194,203,.2);}
+    .hint{font-size:0.7rem;color:var(--text-muted);margin-top:2px;}
+
+    .section-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:1.5px;margin:14px 0 8px;}
+
+    .btn-theme-primary{background:linear-gradient(135deg,var(--primary),#009999);color:white;width:100%;margin-top:14px;padding:13px;border:none;border-radius:10px;font-size:0.95rem;font-weight:700;cursor:pointer;transition:all .2s;}
+    .btn-theme-primary:hover{background:linear-gradient(135deg,#006666,var(--primary));color:white;transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,128,128,.35);}
+    .btn-theme-primary:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+
+    /* Risk circle */
+    .risk-circle{width:140px;height:140px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 14px;border:6px solid;}
+    .risk-circle .score{font-size:2.4rem;font-weight:800;}
+    .risk-circle .label{font-size:0.72rem;color:var(--text-muted);}
+    .risk-HIGH   {border-color:#dc3545;background:rgba(220,53,69,.1);color:#dc3545;}
+    .risk-MEDIUM {border-color:#fd7e14;background:rgba(253,126,20,.1);color:#fd7e14;}
+    .risk-LOW    {border-color:#198754;background:rgba(25,135,84,.1);color:#198754;}
+
+    .risk-badge{display:inline-block;padding:6px 18px;border-radius:20px;font-weight:700;font-size:0.85rem;}
+    .badge-HIGH  {background:rgba(220,53,69,.15);color:#dc3545;border:1px solid #dc3545;}
+    .badge-MEDIUM{background:rgba(253,126,20,.15);color:#fd7e14;border:1px solid #fd7e14;}
+    .badge-LOW   {background:rgba(25,135,84,.15);color:#198754;border:1px solid #198754;}
+
+    .info-box{background:var(--bg);border-left:4px solid var(--primary);border-radius:0 8px 8px 0;padding:12px 14px;margin-top:11px;font-size:0.86rem;line-height:1.5;color:var(--text);}
+    .info-box.orange{border-left-color:#fd7e14;}
+    .info-box.green{border-left-color:#198754;}
+
+    .cost-box{background:rgba(0,128,128,.08);border:1px solid rgba(0,128,128,.25);border-radius:10px;padding:14px;margin-top:12px;text-align:center;}
+    .cost-box .amount{font-size:1.8rem;font-weight:800;color:var(--primary);}
+    .cost-box .sub{font-size:0.76rem;color:var(--text-muted);margin-top:3px;}
+
+    .loan-approved{border:2px solid #198754!important;}
+    .loan-rejected{border:2px solid #dc3545!important;}
+    .loan-amount{font-size:2rem;font-weight:800;color:var(--primary);text-align:center;margin:10px 0;}
+    .loan-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+    .loan-item{background:var(--bg);border-radius:8px;padding:10px 14px;border:1px solid var(--border);}
+    .loan-item .l-label{font-size:0.72rem;color:var(--text-muted);}
+    .loan-item .l-value{font-size:1.05rem;font-weight:700;color:var(--primary);}
+
+    .privacy-note{background:rgba(25,135,84,.08);border:1px solid rgba(25,135,84,.3);border-radius:8px;padding:10px 13px;margin-top:12px;font-size:0.78rem;color:var(--secondary);}
+
+    .log-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:0.82rem;}
+    .log-item:last-child{border-bottom:none;}
+    .log-time{color:var(--primary);font-weight:600;min-width:78px;font-size:0.75rem;}
+    .log-event{color:var(--text);line-height:1.4;}
+
+    .placeholder{text-align:center;padding:32px 20px;color:var(--text-muted);}
+    .placeholder .icon{font-size:2.8rem;margin-bottom:10px;}
+    .loading{text-align:center;padding:28px;color:var(--primary);animation:pulse 1s infinite;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>❤️ MediGuard AI</h1>
+    <p>Privacy-Preserving Heart Risk Prediction & Medical Loan Approval System</p>
+  </div>
+  <div>
+    <div class="badge-custom">SAMHITA'26</div>
+    <div class="mit-badge">Madras Institute of Technology • Dept. of IT</div>
+  </div>
+</div>
+
+<div class="container py-4">
+  <div class="row g-4">
+    <!-- FORM -->
+    <div class="col-lg-6">
+    <div class="card theme-card h-100">
+      <h2>❤️ Patient Clinical Profile</h2>
+      <div class="section-label">Cardiac Features (UCI Heart Disease Dataset)</div>
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label>Age (years)</label>
+          <input type="number" id="age" placeholder="e.g. 55" min="20" max="100"/>
+        </div>
+        <div class="form-group">
+          <label>Sex</label>
+          <select id="sex">
+            <option value="1">Male</option>
+            <option value="0">Female</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Chest Pain Type</label>
+          <select id="cp">
+            <option value="0">Typical Angina</option>
+            <option value="1">Atypical Angina</option>
+            <option value="2">Non-Anginal Pain</option>
+            <option value="3">Asymptomatic</option>
+          </select>
+          <span class="hint">Type of chest pain experienced</span>
+        </div>
+        <div class="form-group">
+          <label>Resting BP (mmHg)</label>
+          <input type="number" id="trestbps" placeholder="e.g. 130" min="80" max="220"/>
+          <span class="hint">Blood pressure at rest</span>
+        </div>
+        <div class="form-group">
+          <label>Cholesterol (mg/dl)</label>
+          <input type="number" id="chol" placeholder="e.g. 250" min="100" max="600"/>
+          <span class="hint">Serum cholesterol level</span>
+        </div>
+        <div class="form-group">
+          <label>Fasting Blood Sugar</label>
+          <select id="fbs">
+            <option value="0">≤ 120 mg/dl (Normal)</option>
+            <option value="1">> 120 mg/dl (High)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Resting ECG</label>
+          <select id="restecg">
+            <option value="0">Normal</option>
+            <option value="1">ST-T Wave Abnormality</option>
+            <option value="2">Left Ventricular Hypertrophy</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Max Heart Rate</label>
+          <input type="number" id="thalach" placeholder="e.g. 150" min="60" max="220"/>
+          <span class="hint">Maximum heart rate achieved</span>
+        </div>
+        <div class="form-group">
+          <label>Exercise Angina</label>
+          <select id="exang">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+          </select>
+          <span class="hint">Chest pain during exercise</span>
+        </div>
+        <div class="form-group">
+          <label>ST Depression</label>
+          <input type="number" id="oldpeak" placeholder="e.g. 1.5" step="0.1" min="0" max="7"/>
+          <span class="hint">Exercise-induced ST depression</span>
+        </div>
+        <div class="form-group">
+          <label>ST Slope</label>
+          <select id="slope">
+            <option value="0">Upsloping</option>
+            <option value="1">Flat</option>
+            <option value="2">Downsloping</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Major Vessels (0–4)</label>
+          <input type="number" id="ca" placeholder="e.g. 0" min="0" max="4"/>
+          <span class="hint">Coloured by fluoroscopy</span>
+        </div>
+        <div class="form-group">
+          <label>Thal</label>
+          <select id="thal">
+            <option value="0">Normal</option>
+            <option value="1">Fixed Defect</option>
+            <option value="2">Reversible Defect</option>
+          </select>
+          <span class="hint">Thalassemia type</span>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:16px;">Financial Profile</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Monthly Income (₹)</label>
+          <input type="number" id="income" placeholder="e.g. 45000"/>
+        </div>
+        <div class="form-group">
+          <label>Credit Score</label>
+          <input type="number" id="credit_score" placeholder="e.g. 720" min="300" max="900"/>
+        </div>
+      </div>
+
+      <button class="btn-theme-primary" onclick="runAnalysis()" id="analyzeBtn">
+        ❤️ Analyze Heart Risk & Get Loan Decision
+      </button>
+    </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="col-lg-6">
+      <div class="card theme-card mb-3" id="riskCard">
+        <h2>💔 Heart Disease Risk</h2>
+        <div id="riskResult">
+          <div class="placeholder"><div class="icon">🫀</div><div>Submit clinical data to see heart risk analysis</div></div>
+        </div>
+      </div>
+      <div class="card theme-card" id="loanCard">
+        <h2>💳 Medical Loan Decision</h2>
+        <div id="loanResult">
+          <div class="placeholder"><div class="icon">🏦</div><div>Loan decision will appear here</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHAP + LOG -->
+  <div class="row g-4 mt-2">
+    <div class="col-lg-6">
+    <div class="card theme-card h-100">
+      <h2>📊 AI Explanation — Top Risk Factors</h2>
+      <div id="shapContainer"><div class="placeholder"><div class="icon">📈</div><div>Feature importance chart appears after analysis</div></div></div>
+      <canvas id="shapChart" style="display:none"></canvas>
+    </div>
+    </div>
+    <div class="col-lg-6">
+    <div class="card theme-card h-100">
+      <h2>🔒 Privacy Audit Log</h2>
+      <div id="privacyLog"><div class="placeholder"><div class="icon">🔐</div><div>Privacy log appears after analysis</div></div></div>
+    </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// When page is served from backend (http://127.0.0.1:8000/), use same origin; else use backend URL
+const API = (window.location.port === "8000" && window.location.hostname !== "file") ? "" : "http://127.0.0.1:8000";
+let shapChartInstance = null;
+
+function showBackendError(err, extra) {
+  const isFileProtocol = window.location.protocol === "file:";
+  const serveTip = isFileProtocol
+    ? "<br><strong>This page was opened as a file (file://). Browsers block requests from file://.</strong><br>Serve this folder instead: open terminal in project folder and run:<br><code>python -m http.server 5500</code><br>Then open: <a href='http://127.0.0.1:5500/index.html' target='_blank'>http://127.0.0.1:5500/index.html</a>"
+    : "<br>Ensure backend is running in project folder: <code>uvicorn app:app --reload</code>";
+  document.getElementById("riskResult").innerHTML =
+    "<div style='color:#dc3545;padding:20px'>" +
+    "Cannot connect to backend. " + (err && err.message ? err.message : "") + (extra || "") +
+    serveTip + "</div>";
+}
+
+async function runAnalysis() {
+  const btn = document.getElementById("analyzeBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ Analyzing...";
+  await fetch(`${API}/audit-log`,{method:"DELETE"}).catch(()=>{});
+
+  document.getElementById("riskResult").innerHTML  = '<div class="loading">🔄 Running federated heart risk model...</div>';
+  document.getElementById("loanResult").innerHTML  = '<div class="loading">⏳ Waiting for risk result...</div>';
+
+  const healthData = {
+    age:      parseFloat(document.getElementById("age").value)      || 55,
+    sex:      parseInt(document.getElementById("sex").value),
+    cp:       parseInt(document.getElementById("cp").value),
+    trestbps: parseFloat(document.getElementById("trestbps").value) || 130,
+    chol:     parseFloat(document.getElementById("chol").value)     || 250,
+    fbs:      parseInt(document.getElementById("fbs").value),
+    restecg:  parseInt(document.getElementById("restecg").value),
+    thalach:  parseFloat(document.getElementById("thalach").value)  || 150,
+    exang:    parseInt(document.getElementById("exang").value),
+    oldpeak:  parseFloat(document.getElementById("oldpeak").value)  || 1.0,
+    slope:    parseInt(document.getElementById("slope").value),
+    ca:       parseInt(document.getElementById("ca").value)         || 0,
+    thal:     parseInt(document.getElementById("thal").value),
+  };
+
+  const income       = parseFloat(document.getElementById("income").value)       || 40000;
+  const credit_score = parseFloat(document.getElementById("credit_score").value) || 700;
+
+  try {
+    const dRes = await fetch(`${API}/predict-disease`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(healthData)});
+    const risk = await dRes.json();
+    if (!dRes.ok) {
+      showBackendError(null, " Backend returned " + dRes.status + (risk.detail ? ": " + JSON.stringify(risk.detail) : ""));
+      btn.disabled = false;
+      btn.textContent = "❤️ Analyze Heart Risk & Get Loan Decision";
+      return;
+    }
+    renderRiskResult(risk);
+    renderShapChart(risk.feature_importance);
+
+    document.getElementById("loanResult").innerHTML = '<div class="loading">🏦 Evaluating medical loan eligibility...</div>';
+    const lRes = await fetch(`${API}/approve-loan`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      income, credit_score,
+      disease_risk_score: risk.risk_score,
+      treatment_cost: risk.treatment_cost
+    })});
+    const loan = await lRes.json();
+    if (!lRes.ok) {
+      showBackendError(null, " Loan API returned " + lRes.status);
+    } else {
+      renderLoanResult(loan);
+    }
+
+    const logRes = await fetch(`${API}/audit-log`);
+    const logData = await logRes.json();
+    renderPrivacyLog(logData.log);
+  } catch(err) {
+    showBackendError(err);
+  }
+
+  btn.disabled = false;
+  btn.textContent = "❤️ Analyze Heart Risk & Get Loan Decision";
+}
+
+function renderRiskResult(d) {
+  document.getElementById("riskResult").innerHTML = `
+    <div style="text-align:center">
+      <div class="risk-circle risk-${d.risk_level}">
+        <span class="score">${d.risk_score}</span>
+        <span class="label">/ 100</span>
+      </div>
+      <span class="risk-badge badge-${d.risk_level}">${d.risk_level} HEART RISK</span>
+      <div style="font-size:0.7rem;color:var(--text-muted);margin-top:5px">🔒 Differential Privacy Applied</div>
+    </div>
+    <div class="info-box">❤️ <strong>Recommended Action:</strong><br>${d.action}</div>
+    <div class="cost-box">
+      <div class="amount">₹${d.treatment_cost.toLocaleString()}</div>
+      <div class="sub">Estimated Treatment Cost</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px">${d.treatment_info}</div>
+    </div>
+    <div class="privacy-note">🛡️ ${d.privacy_note}</div>`;
+}
+
+function renderLoanResult(l) {
+  document.getElementById("loanCard").className = l.approved ? "card theme-card loan-approved" : "card theme-card loan-rejected";
+  document.getElementById("loanResult").innerHTML = l.approved ? `
+    <div style="text-align:center">
+      <div style="font-size:1.4rem;margin-bottom:6px">✅ LOAN APPROVED</div>
+      <div class="loan-amount">₹${l.loan_amount.toLocaleString()}</div>
+    </div>
+    <div class="loan-grid">
+      <div class="loan-item"><div class="l-label">Monthly EMI</div><div class="l-value">₹${l.emi.toLocaleString()}</div></div>
+      <div class="loan-item"><div class="l-label">Tenure</div><div class="l-value">${l.tenure_months} months</div></div>
+      <div class="loan-item"><div class="l-label">Interest Rate</div><div class="l-value">${l.interest_rate}</div></div>
+      <div class="loan-item"><div class="l-label">Approval Score</div><div class="l-value">${l.score}/100</div></div>
+    </div>
+    <div class="privacy-note">🛡️ ${l.privacy_note}</div>` :
+  `<div style="text-align:center;padding:20px">
+    <div style="font-size:1.4rem;color:#dc3545;margin-bottom:10px">❌ NOT APPROVED</div>
+    <div style="color:var(--text);font-size:0.88rem">${l.message}</div>
+   </div>
+   <div class="privacy-note">🛡️ ${l.privacy_note}</div>`;
+}
+
+function renderShapChart(importance) {
+  document.getElementById("shapContainer").style.display = "none";
+  const canvas = document.getElementById("shapChart");
+  canvas.style.display = "block";
+  if (shapChartInstance) shapChartInstance.destroy();
+
+  const labels = Object.keys(importance);
+  const values = Object.values(importance);
+  const colors = values.map(v => v>20?"rgba(220,53,69,0.85)":v>10?"rgba(253,126,20,0.85)":"rgba(0,194,203,0.8)");
+
+  shapChartInstance = new Chart(canvas,{
+    type:"bar",
+    data:{labels,datasets:[{label:"Impact on Heart Risk (%)",data:values,backgroundColor:colors,borderRadius:6}]},
+    options:{
+      indexAxis:"y",responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:"#0A2540"},grid:{color:"rgba(10,37,64,0.12)"}},
+        y:{ticks:{color:"#0A2540"},grid:{display:false}}
+      }
+    }
+  });
+}
+
+function renderPrivacyLog(log) {
+  const icons={"submitted":"📋","Local":"🖥️","Differential":"🔐","score":"📊","received":"🏦","APPROVED":"✅","review":"⏳","NOT":"❌"};
+  document.getElementById("privacyLog").innerHTML =
+    log.map(item=>{
+      const icon = Object.keys(icons).find(k=>item.event.includes(k));
+      return `<div class="log-item">
+        <span>${icon?icons[icon]:"🔒"}</span>
+        <span class="log-time">${item.time}</span>
+        <span class="log-event">${item.event}</span>
+      </div>`;
+    }).join("") +
+    `<div style="margin-top:12px;padding:10px;background:rgba(25,135,84,0.08);border:1px solid rgba(25,135,84,0.3);border-radius:8px;font-size:0.78rem;color:#198754;text-align:center">
+      ✅ Raw clinical data shared with bank: <strong>NEVER</strong>
+    </div>`;
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
