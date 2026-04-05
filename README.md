@@ -1,4 +1,4 @@
-# ❤️ MediGuard AI
+#  MediGuard AI
 
 ### Privacy-Presving Heart Risk Prediction & Medical Loan Approval System
 
