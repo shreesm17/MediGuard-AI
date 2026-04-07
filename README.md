@@ -1,6 +1,6 @@
-#  PrivacyLens-MediGuard-AI
+#  MediGuard-AI
 
-### Privacy-Presving Heart Risk Prediction & Medical Loan Approval System
+### Privacy-Preserving Heart Risk Prediction & Medical Loan Approval System
 
 An intelligent, full-stack AI application that combines **healthcare risk prediction**, **Explainable AI (XAI)**, and **privacy-preserving financial decision-making** to enable **accessible and transparent medical support**.
 
